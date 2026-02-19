@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Missing Letters Game - Manoj Sir</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+        .letter-slot { min-width: 2.8rem; height: 3.5rem; }
+        @media (max-width: 640px) {
+            .letter-slot { min-width: 2rem; height: 2.8rem; font-size: 1.1rem; }
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .animate-pop { animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+
+    <div id="app" class="max-w-xl mx-auto min-h-screen flex flex-col p-4">
+        <!-- Screens will be injected here -->
+    </div>
+
+    <script>
+        // --- Word Database (125 Words) ---
+        const levelsData = {
+            1: [ // 3 Letters
+                { word: "CAT", hint: "બિલાડી", icon: "🐱" }, { word: "DOG", hint: "કૂતરો", icon: "🐶" }, { word: "SUN", hint: "સૂરજ", icon: "☀️" }, { word: "BOX", hint: "પેટી", icon: "📦" }, { word: "PIN", hint: "ટાંકણી", icon: "📍" },
+                { word: "MAP", hint: "નકશો", icon: "🗺️" }, { word: "BED", hint: "પલંગ", icon: "🛏️" }, { word: "CUP", hint: "કપ", icon: "☕" }, { word: "FAN", hint: "પંખો", icon: "🌀" }, { word: "HAT", hint: "ટોપી", icon: "👒" },
+                { word: "JAM", hint: "જામ", icon: "🍓" }, { word: "PEN", hint: "પેન", icon: "🖋️" }, { word: "NET", hint: "જાળી", icon: "🕸️" }, { word: "LOG", hint: "લાકડું", icon: "🪵" }, { word: "BAT", hint: "બેટ", icon: "🏏" },
+                { word: "POT", hint: "ઘડો", icon: "🏺" }, { word: "BUS", hint: "બસ", icon: "🚌" }, { word: "EGG", hint: "ઇંડું", icon: "🥚" }, { word: "OWL", hint: "ઘુવડ", icon: "🦉" }, { word: "ANT", hint: "કીડી", icon: "🐜" },
+                { word: "SKY", hint: "આકાશ", icon: "☁️" }, { word: "TEA", hint: "ચા", icon: "🍵" }, { word: "ICE", hint: "બરફ", icon: "🧊" }, { word: "KEY", hint: "ચાવી", icon: "🔑" }, { word: "RED", hint: "લાલ રંગ", icon: "🔴" }
+            ],
+            2: [ // 4 Letters
+                { word: "BOOK", hint: "ચોપડી", icon: "📖" }, { word: "FISH", hint: "માછલી", icon: "🐟" }, { word: "TREE", hint: "ઝાડ", icon: "🌳" }, { word: "BIRD", hint: "પક્ષી", icon: "🐦" }, { word: "MOON", hint: "ચંદ્ર", icon: "🌙" },
+                { word: "STAR", hint: "તારો", icon: "⭐" }, { word: "BOAT", hint: "હોડી", icon: "⛵" }, { word: "CAKE", hint: "કેક", icon: "🎂" }, { word: "DOOR", hint: "દરવાજો", icon: "🚪" }, { word: "FIRE", hint: "આગ", icon: "🔥" },
+                { word: "HAND", hint: "હાથ", icon: "✋" }, { word: "MILK", hint: "દૂધ", icon: "🥛" }, { word: "NOSE", hint: "નાક", icon: "👃" }, { word: "PARK", hint: "બગીચો", icon: "🏞️" }, { word: "RAIN", hint: "વરસાદ", icon: "🌧️" },
+                { word: "SHIP", hint: "વહાણ", icon: "🚢" }, { word: "SNOW", hint: "બરફ (હિમ)", icon: "❄️" }, { word: "WIND", hint: "પવન", icon: "💨" }, { word: "BABY", hint: "બાળક", icon: "👶" }, { word: "COLD", hint: "ઠંડુ", icon: "🍦" },
+                { word: "FAST", hint: "ઝડપી", icon: "🏃" }, { word: "GOOD", hint: "સરસ", icon: "👍" }, { word: "HARD", hint: "સખત", icon: "💎" }, { word: "LOVE", hint: "પ્રેમ", icon: "❤️" }, { word: "KIND", hint: "દયાળુ", icon: "😇" }
+            ],
+            3: [ // 5 Letters
+                { word: "APPLE", hint: "સફરજન", icon: "🍎" }, { word: "WATER", hint: "પાણી", icon: "💧" }, { word: "CHAIR", hint: "ખુરશી", icon: "🪑" }, { word: "TABLE", hint: "ટેબલ", icon: "🪵" }, { word: "HOUSE", hint: "ઘર", icon: "🏠" },
+                { word: "BREAD", hint: "બ્રેડ", icon: "🍞" }, { word: "EARTH", hint: "પૃથ્વી", icon: "🌍" }, { word: "FRUIT", hint: "ફળ", icon: "🍎" }, { word: "GRASS", hint: "ઘાસ", icon: "🌱" }, { word: "NIGHT", hint: "રાત", icon: "🌃" },
+                { word: "PAPER", hint: "કાગળ", icon: "📄" }, { word: "PHONE", hint: "ફોન", icon: "📱" }, { word: "PLANT", hint: "છોડ", icon: "🪴" }, { word: "RIVER", hint: "નદી", icon: "🏞️" }, { word: "SMALL", hint: "નાનું", icon: "🐭" },
+                { word: "SMILE", hint: "સ્મિત", icon: "😊" }, { word: "SOUTH", hint: "દક્ષિણ દિશા", icon: "🧭" }, { word: "STUDY", hint: "ભણવું", icon: "📚" }, { word: "TRAIN", hint: "ટ્રેન", icon: "🚆" }, { word: "WORLD", hint: "દુનિયા", icon: "🌐" },
+                { word: "YOUNG", hint: "યુવાન", icon: "👦" }, { word: "CLOUD", hint: "વાદળ", icon: "☁️" }, { word: "GREEN", hint: "લીલો રંગ", icon: "🟢" }, { word: "PIZZA", hint: "પિઝા", icon: "🍕" }, { word: "TRUCK", hint: "ટ્રક", icon: "🚛" }
+            ],
+            4: [ // 6 Letters
+                { word: "SCHOOL", hint: "શાળા", icon: "🏫" }, { word: "FRIEND", hint: "મિત્ર", icon: "🤝" }, { word: "GARDEN", hint: "બગીચો", icon: "🏡" }, { word: "DOCTOR", hint: "ડોક્ટર", icon: "👨‍⚕️" }, { word: "ANIMAL", hint: "પ્રાણી", icon: "🦁" },
+                { word: "WINDOW", hint: "બારી", icon: "🪟" }, { word: "YELLOW", hint: "પીળો રંગ", icon: "💛" }, { word: "FAMILY", hint: "પરિવાર", icon: "👨‍👩‍👧‍👦" }, { word: "KITCHEN", hint: "રસોડું", icon: "🍳" }, { word: "FARMER", hint: "ખેડૂત", icon: "👨‍🌾" },
+                { word: "MARKET", hint: "બજાર", icon: "🛍️" }, { word: "BOTTLE", hint: "બોટલ", icon: "🍼" }, { word: "WINTER", hint: "શિયાળો", icon: "❄️" }, { word: "SUMMER", hint: "ઉનાળો", icon: "☀️" }, { word: "SPRING", hint: "વસંત ઋતુ", icon: "🌸" },
+                { word: "ORANGE", hint: "નારંગી", icon: "🍊" }, { word: "BANANA", hint: "કેળું", icon: "🍌" }, { word: "BRIDGE", hint: "પુલ", icon: "🌉" }, { word: "CASTLE", hint: "કિલ્લો", icon: "🏰" }, { word: "FOREST", hint: "જંગલ", icon: "🌲" },
+                { word: "NATURE", hint: "કુદરત", icon: "🌿" }, { word: "PLANET", hint: "ગ્રહ", icon: "🪐" }, { word: "SILVER", hint: "ચાંદી", icon: "🥈" }, { word: "TRAVEL", hint: "મુસાફરી", icon: "✈️" }, { word: "COFFEE", hint: "કોફી", icon: "☕" }
+            ],
+            5: [ // 6 Letters - Mixed Harder
+                { word: "CHEESE", hint: "ચીઝ", icon: "🧀" }, { word: "DANGER", hint: "જોખમ", icon: "⚠️" }, { word: "ENERGY", hint: "શક્તિ", icon: "⚡" }, { word: "FAMOUS", hint: "પ્રખ્યાત", icon: "🌟" }, { word: "FLOWER", hint: "ફૂલ", icon: "🌻" },
+                { word: "GENTLE", hint: "નમ્ર", icon: "🕊️" }, { word: "HEAVEN", hint: "સ્વર્ગ", icon: "☁️" }, { word: "HUNGRY", hint: "ભૂખ્યું", icon: "😋" }, { word: "ISLAND", hint: "ટાપુ", icon: "🏝️" }, { word: "LISTEN", hint: "સાંભળવું", icon: "👂" },
+                { word: "MOTHER", hint: "માતા", icon: "👩" }, { word: "PERSON", hint: "વ્યક્તિ", icon: "👤" }, { word: "PLEASE", hint: "મહેરબાની કરીને", icon: "🙏" }, { word: "POCKET", hint: "ખિસ્સું", icon: "👖" }, { word: "PUZZLE", hint: "કોયડો", icon: "🧩" },
+                { word: "RABBIT", hint: "સસલું", icon: "🐇" }, { word: "SISTER", hint: "બહેન", icon: "👧" }, { word: "STRONG", hint: "મજબૂત", icon: "💪" }, { word: "THANKS", hint: "આભાર", icon: "🙌" }, { word: "USEFUL", hint: "ઉપયોગી", icon: "🛠️" },
+                { word: "ROCKET", hint: "રોકેટ", icon: "🚀" }, { word: "JACKET", hint: "જેકેટ", icon: "🧥" }, { word: "TURTLE", hint: "કાચબો", icon: "🐢" }, { word: "WIZARD", hint: "જાદુગર", icon: "🧙" }, { word: "SMILEY", hint: "હસતું મોઢું", icon: "😃" }
+            ]
+        };
+
+        // --- Game State ---
+        let state = {
+            view: 'levelSelect', // levelSelect, play, result
+            activeLevel: 1,
+            currentWordIdx: 0,
+            score: 0,
+            currentWordState: [],
+            missingIndices: [],
+            feedback: null
+        };
+
+        // --- Sound SFX using AudioContext (No External Files Needed) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playTone(freq, type, duration) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        const sounds = {
+            click: () => playTone(600, 'sine', 0.1),
+            correct: () => { playTone(500, 'sine', 0.1); setTimeout(() => playTone(800, 'sine', 0.2), 100); },
+            wrong: () => { playTone(300, 'sawtooth', 0.3); },
+            win: () => { [440, 554, 659, 880].forEach((f, i) => setTimeout(() => playTone(f, 'sine', 0.4), i * 150)); }
+        };
+
+        // --- Logic Functions ---
+        function selectLevel(lvl) {
+            sounds.click();
+            state.activeLevel = lvl;
+            state.currentWordIdx = 0;
+            state.score = 0;
+            state.view = 'play';
+            setupTurn();
+            render();
+        }
+
+        function setupTurn() {
+            const wordObj = levelsData[state.activeLevel][state.currentWordIdx];
+            const word = wordObj.word;
+            
+            // Determine missing letters based on level
+            let numToHide = state.activeLevel <= 2 ? 1 : 2;
+            const indices = [];
+            while (indices.length < numToHide) {
+                const r = Math.floor(Math.random() * word.length);
+                if (!indices.includes(r)) indices.push(r);
+            }
+            
+            state.missingIndices = indices;
+            state.currentWordState = word.split('').map((char, idx) => indices.includes(idx) ? '' : char);
+            state.feedback = null;
+        }
+
+        function handleKey(letter) {
+            if (state.feedback) return;
+            const emptyIdx = state.currentWordState.indexOf('');
+            if (emptyIdx !== -1) {
+                state.currentWordState[emptyIdx] = letter;
+                render();
+            }
+        }
+
+        function handleBackspace() {
+            if (state.feedback) return;
+            for (let i = state.currentWordState.length - 1; i >= 0; i--) {
+                if (state.missingIndices.includes(i) && state.currentWordState[i] !== '') {
+                    state.currentWordState[i] = '';
+                    render();
+                    break;
+                }
+            }
+        }
+
+        function checkAnswer() {
+            const correctWord = levelsData[state.activeLevel][state.currentWordIdx].word;
+            const userWord = state.currentWordState.join('');
+            
+            if (userWord === correctWord) {
+                state.feedback = 'correct';
+                state.score += 10;
+                sounds.correct();
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            } else {
+                state.feedback = 'wrong';
+                sounds.wrong();
+            }
+            render();
+        }
+
+        function nextQuestion() {
+            sounds.click();
+            if (state.currentWordIdx < 24) {
+                state.currentWordIdx++;
+                setupTurn();
+            } else {
+                state.view = 'result';
+                sounds.win();
+                confetti({ particleCount: 300, spread: 150, origin: { y: 0.5 } });
+            }
+            render();
+        }
+
+        function getFooter() {
+            return `
+                <div class="mt-8 text-center border-t border-white/20 pt-4 pb-2 text-white">
+                    <p class="text-[10px] font-semibold opacity-70 uppercase tracking-widest">Created By:</p>
+                    <p class="text-lg font-bold">Manoj Sir</p>
+                    <p class="text-xs opacity-90">Pay Centre School Bhatera</p>
+                </div>
+            `;
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+            
+            if (state.view === 'levelSelect') {
+                app.innerHTML = `
+                    <div class="flex-1 flex flex-col items-center justify-center p-4">
+                        <div class="bg-white/10 backdrop-blur-md rounded-3xl shadow-2xl p-8 w-full text-center border border-white/20 animate-pop">
+                            <h1 class="text-4xl font-black text-white mb-2">Missing Letters</h1>
+                            <h2 class="text-xl text-yellow-300 font-bold mb-8 italic">ખૂટતા અક્ષરો શોધો</h2>
+                            
+                            <p class="text-white/80 mb-6 text-sm">નીચેનામાંથી એક લેવલ પસંદ કરો</p>
+                            
+                            <div class="grid grid-cols-1 gap-4 mb-8">
+                                ${[1,2,3,4,5].map(l => `
+                                    <button onclick="selectLevel(${l})" class="bg-white hover:bg-yellow-400 text-indigo-900 font-bold py-4 rounded-2xl shadow-lg transition-all active:scale-95 flex justify-between px-6 items-center">
+                                        <span class="text-lg">Level ${l}</span>
+                                        <span class="text-xs bg-indigo-100 px-3 py-1 rounded-full">${l+2} Letters</span>
+                                    </button>
+                                `).join('')}
+                            </div>
+                            ${getFooter()}
+                        </div>
+                    </div>
+                `;
+            } else if (state.view === 'play') {
+                const currentData = levelsData[state.activeLevel][state.currentWordIdx];
+                const isComplete = !state.currentWordState.includes('');
+                
+                app.innerHTML = `
+                    <div class="p-4 flex justify-between items-center font-bold text-white mb-2">
+                        <div class="bg-white/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/30 flex items-center gap-2">
+                            <span>⭐</span> ${state.score}
+                        </div>
+                        <div class="bg-white/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/30">
+                            Word ${state.currentWordIdx + 1} / 25
+                        </div>
+                    </div>
+
+                    <div class="flex-1 flex flex-col">
+                        <div class="bg-white rounded-3xl shadow-2xl p-6 mb-6 text-center animate-pop">
+                            
+                            <div class="text-8xl mb-4 drop-shadow-lg">${currentData.icon}</div>
+
+                            <div class="bg-indigo-50 p-3 rounded-2xl border border-indigo-100 mb-6">
+                                <p class="text-[10px] text-indigo-400 font-bold uppercase mb-1 tracking-widest">ઈશારો (Hint)</p>
+                                <p class="text-xl font-bold text-gray-800">${currentData.hint}</p>
+                            </div>
+
+                            <div class="flex flex-wrap justify-center gap-2 mb-8">
+                                ${state.currentWordState.map((char, idx) => {
+                                    const isMissing = state.missingIndices.includes(idx);
+                                    let cls = "border-b-4 border-gray-200 text-gray-800";
+                                    if (isMissing) {
+                                        cls = "border-b-4 border-indigo-500 bg-indigo-50 text-indigo-600";
+                                        if (state.feedback === 'correct') cls = "border-b-4 border-green-500 bg-green-50 text-green-600";
+                                        if (state.feedback === 'wrong') cls = "border-b-4 border-red-500 bg-red-50 text-red-600";
+                                    }
+                                    return `<div class="letter-slot flex items-center justify-center text-3xl font-black rounded-t-xl transition-all ${cls}">${char}</div>`;
+                                }).join('')}
+                            </div>
+
+                            ${state.feedback ? `
+                                <div class="mb-6 p-4 rounded-2xl font-bold ${state.feedback === 'correct' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                                    ${state.feedback === 'correct' ? '✓ વાહ! સાચું છે.' : '✗ ખોટું! સાચો જવાબ: ' + currentData.word}
+                                </div>
+                            ` : ''}
+
+                            <button onclick="${state.feedback ? 'nextQuestion()' : 'checkAnswer()'}" 
+                                ${!isComplete && !state.feedback ? 'disabled' : ''}
+                                class="w-full py-4 rounded-2xl text-xl font-bold shadow-lg transition-all active:scale-95 ${(!isComplete && !state.feedback) ? 'bg-gray-200 text-gray-400' : 'bg-indigo-600 text-white hover:bg-indigo-700'}">
+                                ${state.feedback ? 'આગળ વધો ➜' : 'તપાસો (Check)'}
+                            </button>
+                            ${getFooter()}
+                        </div>
+
+                        <!-- Keyboard -->
+                        <div class="bg-black/20 backdrop-blur-sm p-3 rounded-3xl mt-auto">
+                            ${["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"].map(row => `
+                                <div class="flex justify-center gap-1 mb-1.5">
+                                    ${row.split('').map(key => `
+                                        <button onclick="handleKey('${key}'); sounds.click();" class="flex-1 max-w-[44px] h-12 bg-white rounded-xl shadow-md font-bold text-gray-700 active:bg-yellow-300 active:scale-90 transition-all text-sm">${key}</button>
+                                    `).join('')}
+                                </div>
+                            `).join('')}
+                            <div class="flex justify-center mt-2">
+                                <button onclick="handleBackspace(); sounds.click();" class="bg-red-500 text-white px-10 py-3 rounded-2xl font-bold active:scale-95 shadow-lg flex items-center gap-2 text-sm uppercase">
+                                    <span>⌫</span> ભૂંસો (Backspace)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (state.view === 'result') {
+                app.innerHTML = `
+                    <div class="flex-1 flex items-center justify-center p-4">
+                        <div class="bg-white rounded-3xl shadow-2xl p-10 w-full text-center animate-pop">
+                            <div class="text-8xl mb-6">🏆</div>
+                            <h1 class="text-3xl font-black text-gray-800 mb-2">અભિનંદન!</h1>
+                            <p class="text-gray-500 font-bold mb-4 uppercase tracking-widest text-xs">લેવલ ${state.activeLevel} પૂર્ણ</p>
+                            <div class="text-7xl font-black text-indigo-600 mb-8">${state.score} <span class="text-xl text-gray-300">/ 250</span></div>
+                            
+                            <div class="space-y-3 mb-10">
+                                <button onclick="state.view = 'levelSelect'; render();" class="w-full bg-indigo-600 text-white text-xl font-bold py-5 rounded-2xl shadow-xl active:scale-95 transition-transform">બીજું લેવલ પસંદ કરો</button>
+                                <button onclick="selectLevel(${state.activeLevel})" class="w-full bg-green-500 text-white text-lg font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-transform">ફરી રમો 🔄</button>
+                            </div>
+                            ${getFooter()}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Initialize view
+        render();
+    </script>
+</body>
+</html>
